@@ -7,15 +7,11 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     DATABASE_URL: str
-
     REDIS_URL: str
-
     API_KEY_SECRET: str
-
+    API_FOOTBALL_KEY: str
     ENVIRONMENT: str = "development"
-
     RATE_LIMIT_PER_MINUTE: int = 60
-
     class Config:
         env_file = ".env"
         case_sensitive = True
