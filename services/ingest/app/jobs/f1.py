@@ -3,6 +3,7 @@ F1 data ingestion jobs.
 """
 
 import logging
+import pandas as pd
 from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
@@ -45,6 +46,39 @@ async def sync_f1_races():
     await redis.hset("ingest_lag", "f1_races", datetime.now(timezone.utc).isoformat())
     logger.info("F1 race sync complete")
 
+async def sync_f1_drivers():
+    logger.info("Starting F1 driver sync")
+    schedule = get_race_schedule(CURRENT_SEASON)
+    if schedule is None or schedule.empty:
+        return
+
+    # Get first completed race to extract driver list
+    results = get_session_results(CURRENT_SEASON, 1)
+    if results is None or results.empty:
+        logger.warning("No session results available for driver sync")
+        return
+
+    async with AsyncSessionLocal() as session:
+        for _, driver in results.iterrows():
+            stmt = insert(F1Driver).values(
+                driver_ref=str(driver["Abbreviation"]),
+                code=str(driver["Abbreviation"]),
+                first_name=str(driver["FirstName"]),
+                last_name=str(driver["LastName"]),
+                nationality=None,
+            ).on_conflict_do_update(
+                constraint="f1_drivers_driver_ref_key",
+                set_=dict(
+                    first_name=str(driver["FirstName"]),
+                    last_name=str(driver["LastName"]),
+                )
+            )
+            await session.execute(stmt)
+        await session.commit()
+
+    redis = get_redis_client()
+    await redis.hset("ingest_lag", "f1_drivers", datetime.now(timezone.utc).isoformat())
+    logger.info("F1 driver sync complete")
 
 async def sync_f1_lap_times():
     logger.info("Starting F1 lap times sync")
@@ -90,7 +124,7 @@ async def sync_f1_lap_times():
                     driver_id=driver.id,
                     lap_number=int(lap["LapNumber"]),
                     lap_time_seconds=lap_seconds,
-                    position=int(lap["Position"]) if lap["Position"] else None,
+                    position=int(lap["Position"]) if lap["Position"] and not pd.isna(lap["Position"]) else None,
                 ).on_conflict_do_nothing()
                 await session.execute(stmt)
 
