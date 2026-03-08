@@ -5,8 +5,9 @@ FastF1 data source for ingesting F1 data.
 import fastf1
 import pandas as pd
 from pathlib import Path
+import tempfile
 
-CACHE_DIR = Path("/tmp/fastf1_cache")
+CACHE_DIR = Path(tempfile.gettempdir()) / "fastf1_cache"
 CACHE_DIR.mkdir(exist_ok=True)
 fastf1.Cache.enable_cache(str(CACHE_DIR))
 
