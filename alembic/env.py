@@ -4,6 +4,8 @@ from alembic import context
 import sys
 import os
 
+from shared.config import get_settings
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from shared.db.base import Base
@@ -16,6 +18,8 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
+settings = get_settings()
+config.set_main_option("sqlalchemy.url", settings.DATABASE_MIGRATION_URL)
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
