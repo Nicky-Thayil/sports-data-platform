@@ -7,6 +7,7 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     DATABASE_URL: str
+    DATABASE_MIGRATION_URL: str
     REDIS_URL: str
     API_KEY_SECRET: str
     API_FOOTBALL_KEY: str
