@@ -4,34 +4,51 @@ Ingest service for the application.
 
 import logging
 import asyncio
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from shared.config import get_settings
-from services.ingest.app.jobs.f1 import sync_f1_races, sync_f1_lap_times, sync_f1_drivers
-from services.ingest.app.jobs.pl import sync_pl_standings, sync_pl_fixtures
+import os
+import sys
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-settings = get_settings()
-
-
 async def main():
-    scheduler = AsyncIOScheduler()
+    job_name = os.environ.get("JOB_NAME")
 
-    scheduler.add_job(sync_f1_races, "interval", hours=12, id="f1_races")
-    scheduler.add_job(sync_f1_lap_times, "interval", hours=12, id="f1_lap_times")
-    scheduler.add_job(sync_f1_drivers, "interval", hours=24, id="f1_drivers")
-    scheduler.add_job(sync_pl_standings, "interval", hours=6, id="pl_standings")
-    scheduler.add_job(sync_pl_fixtures, "interval", hours=6, id="pl_fixtures")
+    if not job_name:
+        logger.error("JOB_NAME environment variable not set")
+        sys.exit(1)
 
-    scheduler.start()
-    logger.info("Ingest service started")
+    logger.info(f"Starting job: {job_name}")
 
     try:
-        while True:
-            await asyncio.sleep(3600)
-    except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown()
+        if job_name == "sync_f1_races":
+            from services.ingest.app.jobs.f1 import sync_f1_races
+            await sync_f1_races()
+
+        elif job_name == "sync_f1_drivers":
+            from services.ingest.app.jobs.f1 import sync_f1_drivers
+            await sync_f1_drivers()
+
+        elif job_name == "sync_f1_lap_times":
+            from services.ingest.app.jobs.f1 import sync_f1_lap_times
+            await sync_f1_lap_times()
+
+        elif job_name == "sync_pl_standings":
+            from services.ingest.app.jobs.pl import sync_pl_standings
+            await sync_pl_standings()
+
+        elif job_name == "sync_pl_fixtures":
+            from services.ingest.app.jobs.pl import sync_pl_fixtures
+            await sync_pl_fixtures()
+
+        else:
+            logger.error(f"Unknown job: {job_name}")
+            sys.exit(1)
+
+    except Exception:
+        logger.exception(f"Job failed: {job_name}")
+        sys.exit(1)
+
+    logger.info(f"Job complete: {job_name}")
 
 
 if __name__ == "__main__":

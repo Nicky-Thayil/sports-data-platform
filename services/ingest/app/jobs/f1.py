@@ -87,6 +87,11 @@ async def sync_f1_lap_times():
         return
 
     async with AsyncSessionLocal() as session:
+        driver_result = await session.execute(select(F1Driver))
+        driver_map: dict[str, F1Driver] = {
+            d.driver_ref: d for d in driver_result.scalars().all()
+        }
+        
         for _, event in schedule.iterrows():
             round_number = int(event["RoundNumber"])
             race_date = event["EventDate"].to_pydatetime()
@@ -109,11 +114,9 @@ async def sync_f1_lap_times():
                 continue
 
             for _, lap in laps.iterrows():
-                driver_result = await session.execute(
-                    select(F1Driver).where(F1Driver.driver_ref == str(lap["Driver"]))
-                )
-                driver = driver_result.scalar_one_or_none()
+                driver = driver_map.get(str(lap["Driver"]))
                 if not driver:
+                    logger.warning(f"Driver not found in map: {lap['Driver']} — skipping lap")
                     continue
 
                 lap_seconds = lap["LapTime"].total_seconds() if lap["LapTime"] is not None else None

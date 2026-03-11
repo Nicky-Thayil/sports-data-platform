@@ -2,12 +2,13 @@
 Shared configuration for the application.
 """
 
+from typing import Optional
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 
 class Settings(BaseSettings):
     DATABASE_URL: str
-    DATABASE_MIGRATION_URL: str
+    DATABASE_MIGRATION_URL: Optional[str] = None     # Only for Alembic, not the API
     REDIS_URL: str
     API_KEY_SECRET: str
     API_FOOTBALL_KEY: str

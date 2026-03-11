@@ -9,6 +9,9 @@ from shared.db.session import AsyncSessionLocal
 from shared.db.models.pl import PLTeam, PLMatch, PLStanding
 from shared.redis import get_redis_client
 from services.ingest.app.sources.api_football import get_standings, get_fixtures
+from sqlalchemy import select
+from shared.db.models.pl import PLTeam as PLTeamModel
+
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +49,6 @@ async def sync_pl_standings():
             await session.execute(team_stmt)
             await session.flush()
 
-            from sqlalchemy import select
-            from shared.db.models.pl import PLTeam as PLTeamModel
             result = await session.execute(
                 select(PLTeamModel).where(PLTeamModel.team_ref == str(team["id"]))
             )
@@ -108,7 +109,6 @@ async def sync_pl_fixtures():
 
             await session.flush()
 
-            from sqlalchemy import select
             home_result = await session.execute(
                 select(PLTeam).where(PLTeam.team_ref == str(teams["home"]["id"]))
             )
