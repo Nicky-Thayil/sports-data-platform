@@ -19,30 +19,28 @@ The platform has two independent services:
 ## Architecture
 
 ```
-Cloud Scheduler (monthly cron)
-        ↓
+API consumers
+        ↓ HTTP
+Cloud Run Service — FastAPI
+        ↓ reads        ↑ Redis (Upstash)
+PostgreSQL (Supabase)
+        ↑ writes
 Cloud Run Jobs — 5 ingest pipelines
         ↓ fetches from
-API-Football / FastF1
-        ↓ writes
-PostgreSQL (Supabase)
-        ↓ reads          ↑ cache + lag timestamps
-Cloud Run Service — FastAPI
-        ↓ cache reads
-Redis (Upstash)
-        ↑ HTTP
-API consumers
+FastF1 / API-Football
+        ↑ triggered by
+Cloud Scheduler (monthly cron)
 ```
 
 ---
 
-## Stack
+## Tech Stack
 
 **Language:** Python 3.11  
 **Framework:** FastAPI  
-**Database:** PostgreSQL · SQLAlchemy (async) · asyncpg  
-**Cache:** Redis · redis.asyncio  
-**Infrastructure:** Google Cloud Run · Cloud Scheduler · Cloud Build  
+**Database:** PostgreSQL · SQLAlchemy · asyncpg
+**Cache:** Redis
+**Infrastructure:** Google Cloud Run · Cloud Scheduler · Artifact Registry · GitHub Actions
 **Managed Services:** Supabase · Upstash  
 **Other:** Docker
 
