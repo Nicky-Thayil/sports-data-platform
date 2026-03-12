@@ -1,7 +1,0 @@
-steps:
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', 
-          '-t', 'us-east1-docker.pkg.dev/apex-sports-platform/cloud-run-source-deploy/apex-ingest', 
-          '-f', 'services/ingest/Dockerfile', '.']
-images:
-  - 'us-east1-docker.pkg.dev/apex-sports-platform/cloud-run-source-deploy/apex-ingest'
