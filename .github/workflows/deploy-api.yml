@@ -1,0 +1,61 @@
+name: Deploy API
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "services/api/**"
+      - "shared/**"
+
+env:
+  PROJECT_ID: apex-sports-platform
+  REGION: us-east1
+  SERVICE: apex-api
+  IMAGE: us-east1-docker.pkg.dev/apex-sports-platform/apex/apex-api
+
+jobs:
+  deploy:
+    name: Build & Deploy API
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push Docker image
+        run: |
+          docker build \
+            -f services/api/Dockerfile \
+            -t ${{ env.IMAGE }}:${{ github.sha }} \
+            -t ${{ env.IMAGE }}:latest \
+            .
+          docker push ${{ env.IMAGE }}:${{ github.sha }}
+          docker push ${{ env.IMAGE }}:latest
+
+      - name: Deploy API to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE }} \
+            --image ${{ env.IMAGE }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 8080 \
+            --set-secrets="DATABASE_URL=DATABASE_URL:latest,REDIS_URL=REDIS_URL:latest,API_KEY_SECRET=API_KEY_SECRET:latest,API_FOOTBALL_KEY=API_FOOTBALL_KEY:latest" \
+            --set-env-vars="ENVIRONMENT=production,RATE_LIMIT_PER_MINUTE=60"
