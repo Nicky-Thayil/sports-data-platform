@@ -18,7 +18,7 @@ The platform has two independent services:
 
 ## Architecture
 
-```
+```text
 API consumers
         ↓ HTTP
 Cloud Run Service — FastAPI
@@ -38,9 +38,9 @@ Cloud Scheduler (monthly cron)
 
 **Language:** Python 3.11  
 **Framework:** FastAPI  
-**Database:** PostgreSQL · SQLAlchemy · asyncpg
-**Cache:** Redis
-**Infrastructure:** Google Cloud Run · Cloud Scheduler · Artifact Registry · GitHub Actions
+**Database:** PostgreSQL · SQLAlchemy · asyncpg  
+**Cache:** Redis  
+**Infrastructure:** Google Cloud Run · Cloud Scheduler · Artifact Registry · GitHub Actions  
 **Managed Services:** Supabase · Upstash  
 **Other:** Docker
 
@@ -66,3 +66,4 @@ JOB_NAME=sync_pl_standings python -m services.ingest.app.main
 ## Future Plans
 
 - Frontend dashboard for standings and lap time visualisations
+- F1 driver and constructor standings endpoints
